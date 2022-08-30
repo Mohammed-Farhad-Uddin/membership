@@ -33,3 +33,13 @@ exports.isVerified = (req, res, next)  => {
         }
         next(); 
 }
+
+
+exports.authorizeRoles = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {//...roles kore ei ta array howar por roles.includes function hocce.//upore req.user =await User.findById(decodedData.id) e sob data store kora hoice 
+            return next(new ErrorHandler(`Role : ${req.user.role} does not allow to access this resource`, 403))
+        }
+        next();
+    }
+}

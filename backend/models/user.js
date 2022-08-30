@@ -49,16 +49,16 @@ const userSchema = new mongoose.Schema({
         required: [true, "Please Enter Your Phone number"],
         
     },
-    avatar: { //ei ta k array akare rakha hoi nai krn ek ta user er jnno ek ta image ba avatar takbe
-        public_id: {
-            type: String,
-            required: true,
-        },
-        url: {
-            type: String,
-            required: true
-        }
-    },
+    // avatar: { //ei ta k array akare rakha hoi nai krn ek ta user er jnno ek ta image ba avatar takbe
+    //     public_id: {
+    //         type: String,
+    //         required: true,
+    //     },
+    //     url: {
+    //         type: String,
+    //         required: true
+    //     }
+    // },
     role: {
         type: String,
         default: 'user',

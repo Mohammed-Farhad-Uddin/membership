@@ -8,7 +8,7 @@ const fs = require("fs");
 
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, dob, phone, role} = req.body;
+        const { name, email, password, dob, phone, role } = req.body;
 
         let user = await User.findOne({ email });
 
@@ -19,16 +19,16 @@ exports.register = async (req, res) => {
             });
         }
 
-        const  avatar  = req.files.avatar.tempFilePath;
+        // const avatar = req.files.avatar.tempFilePath;
 
-        console.log(req.files.avatar);
-        // console.log(req.files);
-        const myCloud = await cloudinary.v2.uploader.upload(avatar, {
-            folder: "users",
-            width: 150,
-            crop: "scale",
-        });
-        fs.rmSync("./tmp", { recursive: true });
+        // console.log(req.files.avatar);
+        // // console.log(req.files);
+        // const myCloud = await cloudinary.v2.uploader.upload(avatar, {
+        //     folder: "users",
+        //     width: 150,
+        //     crop: "scale",
+        // });
+        // fs.rmSync("./tmp", { recursive: true });
 
 
         const otp = Math.floor(Math.random() * 1000000);
@@ -41,10 +41,10 @@ exports.register = async (req, res) => {
             dob,
             role,
             // age: Number(age),
-            avatar: {
-                public_id: myCloud.public_id,
-                url: myCloud.secure_url,
-            },
+            // avatar: {
+            //     public_id: myCloud.public_id,
+            //     url: myCloud.secure_url,
+            // },
             otp,
             otp_expiry: new Date(Date.now() + process.env.OTP_EXPIRE * 60 * 1000),
         }
@@ -329,6 +329,33 @@ exports.updateUsername = async (req, res, next) => {
 };
 
 
+//Update user role-- Admin
+exports.updateUserRole = async (req, res, next) => {
+    try {
+        const { role } = req.body;
+        const user = await User.findByIdAndUpdate(req.params.id, { role }, { //req.user.id dile admin nijer role update hpye jabe...params tekhe id niye oi user role chnage kora lagbe
+            new: true,
+            runValidators: true,
+            useFindAndModify: false
+        });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User log in first" })
+        }
+
+        res.status(200).json({
+            success: true
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
 
 //Forgot Password========
 exports.forgotPassword = async (req, res, next) => {
@@ -402,6 +429,59 @@ exports.resetPassword = async (req, res, next) => {
         await user.save();
 
         sendToken(res, user, 200, "Password reset successfully!");
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
+
+
+//User Delete
+exports.deleteUser = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(400).json({ success: false, message: "Please Login First" });
+        }
+        // await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+        await user.remove();
+        res.status(200).cookie("token", null, { expires: new Date(Date.now()) }).json({
+            success: true,
+            message: "User deleted successfully"
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+
+//Delete sigle user by admin
+exports.deleteSingleteUser = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return next(new ErrorHandler(`User does not exit with id: ${req.params.id}`, 400));
+        }
+
+        //Remove user profile picture from cloudinary
+        await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+
+        await user.remove();
+
+        res.status(200).json({
+            success: true,
+            message: "User deleted successfully"
+        });
 
     } catch (error) {
         res.status(500).json({
